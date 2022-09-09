@@ -11,38 +11,37 @@
 
     <!-- lista -->
     <div v-show="exibir.lista">
-      <TarefaList msg="Welcome to Your Vue.js App" :lista="ListaDeTarefas" />
+      <TarefaList
+        msg="Welcome to Your Vue.js App"
+        :lista="ListaDeTarefas"
+        @editarClick="recebiEditar"
+      />
     </div>
 
     <!-- FORM -->
     <div v-show="exibir.form">
-      <h2>Cadastrar Tarefa</h2>
-      <input
-        type="text"
-        name="title"
-        id="title"
-        placeholder="Entre com a tarefa"
-        v-model="form.title"
+      <TarefaForm
+        :titulo="'ABC'"
+        :title="form.title"
+        :project="form.project"
+        :btn="form.btn"
+        :id="form.id"
+        @salvarClick="recebiSalvar"
+        @alterarClick="recebiAlterar"
       />
-      <input
-        type="text"
-        name="project"
-        v-model="form.project"
-        placeholder="Entre com um projeto"
-      />
-
-      <button @click="salvaTarefa">Salvar</button>
     </div>
   </div>
 </template>
 
 <script>
+import TarefaForm from '@/components/TarefaForm.vue'
 import TarefaList from '../components/TarefaList.vue'
 import TasksApi from '../TasksApi.js'
 
 export default {
   components: {
     TarefaList,
+    TarefaForm,
   },
   data: () => {
     return {
@@ -52,8 +51,11 @@ export default {
         fora: false,
       },
       form: {
+        id: '',
+        titulo: '',
         title: 'teste',
         project: 'Estudo',
+        btn: 'Adicionar',
       },
     }
   },
@@ -69,17 +71,30 @@ export default {
     mostrarCadastro() {
       this.exibir.form = true
       this.exibir.lista = false
+      this.form.btn = 'Adicionar'
     },
-    salvaTarefa() {
-      this.exibir.form = false
-      this.exibir.lista = true
-      const novaTarefa = {
-        title: this.form.title,
-        project: this.form.project,
-        date: new Date().toLocaleDateString('pt'),
-      }
+    recebiSalvar(novaTarefa) {
       TasksApi.addTasks(novaTarefa, () => {
+        this.exibir.form = false
+        this.exibir.lista = true
         this.listaTarefas()
+      })
+    },
+    recebiEditar(tarefaId) {
+      TasksApi.getTask(tarefaId, (task) => {
+        this.form.title = task.title
+        this.form.project = task.project
+        this.form.id = tarefaId
+        this.form.btn = 'Editar'
+        this.exibir.form = true
+        this.exibir.lista = false
+      })
+    },
+    recebiAlterar(tarefa) {
+      TasksApi.updateTasks(tarefa, () => {
+        this.listaTarefas()
+        this.exibir.form = false
+        this.exibir.lista = true
       })
     },
   },
